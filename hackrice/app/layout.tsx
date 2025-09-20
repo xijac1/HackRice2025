@@ -1,4 +1,3 @@
-// Path: /Users/julio/Documents/hackrice/HackRice2025/hackrice/app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
