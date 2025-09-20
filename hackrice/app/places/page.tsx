@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Assuming you add Input component
@@ -11,13 +11,15 @@ export default function PlacesPage() {
     { id: 2, name: "Work", lat: 29.7499, lon: -95.3664, risk: "Caution", outlook: "Improving" },
   ]);
   const [newPlace, setNewPlace] = useState({ name: "", lat: "", lon: "" });
+  const nextIdRef = useRef(3);
 
   const addPlace = () => {
     if (newPlace.name && newPlace.lat && newPlace.lon) {
+      const id = nextIdRef.current++;
       setPlaces([
         ...places,
         {
-          id: Date.now(),
+          id,
           name: newPlace.name,
           lat: Number(newPlace.lat),
           lon: Number(newPlace.lon),

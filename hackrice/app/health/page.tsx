@@ -1,14 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Thermometer, AlertCircle } from "lucide-react";
 
 export default function HealthPage() {
-  const [symptoms, setSymptoms] = useState([{ date: new Date().toDateString(), symptom: "Cough", exposure: "PM2.5 high" }]);
+  const [symptoms, setSymptoms] = useState([{ date: "", symptom: "Cough", exposure: "PM2.5 high" }]);
+
+  useEffect(() => {
+    const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+    setSymptoms((prev) => prev.map((s, i) => (i === 0 && !s.date ? { ...s, date: formatter.format(new Date()) } : s)));
+  }, []);
 
   const logSymptom = () => {
-    setSymptoms([...symptoms, { date: new Date().toDateString(), symptom: "Fatigue", exposure: "O3 exposure" }]);
+    const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+    setSymptoms([...symptoms, { date: formatter.format(new Date()), symptom: "Fatigue", exposure: "O3 exposure" }]);
   };
 
   return (
