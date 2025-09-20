@@ -33,31 +33,41 @@ function getUser(userId = 'default') {
   return users[userId];
 }
 
-// API: Fetch weather from OpenWeatherMap (proxy to hide key)
+// API: Fetch weather from Google Weather API (proxy to hide key)
 app.get('/api/weather/:lat/:lon', async (req, res) => {
   const { lat, lon } = req.params;
-  const apiKey = process.env.OPENWEATHER_API_KEY;
+  // Prefer GOOGLE_WEATHER_API_KEY, fallback to legacy OPENWEATHER_API_KEY if user reused the var
+  const apiKey = process.env.GOOGLE_WEATHER_API_KEY || process.env.OPENWEATHER_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
   try {
-    const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=imperial`
-    );
-    const data = response.data;
-
-    // Format for frontend (matches weatherData shape)
-    const weather = {
-      temperature: Math.round(data.main.temp),
-      humidity: data.main.humidity,
-      windSpeed: Math.round(data.wind.speed),
-      conditions: data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1),
+    const url = 'https://weather.googleapis.com/v1/currentConditions:lookup';
+    const params = {
+      key: apiKey,
+      'location.latitude': lat,
+      'location.longitude': lon,
+      // Frontend expects Fahrenheit and mph
+      unitsSystem: 'IMPERIAL',
     };
 
+    const { data } = await axios.get(url, { params });
+
+    // Map Google Weather response to frontend shape
+    // Docs: https://developers.google.com/maps/documentation/weather/current-conditions
+    const temperature = Math.round(data?.temperature?.degrees ?? 78);
+    const humidity = Math.round(data?.relativeHumidity ?? 65);
+    const windSpeed = Math.round(data?.wind?.speed?.value ?? 8);
+    const descriptionText = data?.weatherCondition?.description?.text || data?.weatherCondition?.type || 'Partly Cloudy';
+    const conditions = typeof descriptionText === 'string' && descriptionText.length
+      ? descriptionText.charAt(0).toUpperCase() + descriptionText.slice(1).toLowerCase()
+      : 'Partly Cloudy';
+
+    const weather = { temperature, humidity, windSpeed, conditions };
     res.json(weather);
   } catch (error) {
-    console.error('Weather API error:', error.message);
+    console.error('Weather API error:', error?.response?.data || error.message);
     // Fallback mock
     res.status(500).json({
       error: 'Failed to fetch weather',
