@@ -49,7 +49,7 @@ export default function Home() {
 
   const adjustedStatus = getRiskStatus(airQualityData.aqi, profile); // Personalized: tighter thresholds
 
-  // Fetch weather from backend (OpenWeatherMap proxy)
+  // Fetch weather from backend (Google Weather proxy)
   const fetchWeather = async (lat: number, lon: number) => {
     setWeatherLoading(true);
     setWeatherError(null);
