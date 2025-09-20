@@ -9,6 +9,17 @@ import { Badge } from "@/components/ui/badge"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false) // <-- track login state
+
+  const handleAuthClick = () => {
+    if (isLoggedIn) {
+      // log out logic here (clear tokens, reset state, etc.)
+      setIsLoggedIn(false)
+    } else {
+      // navigate to login page
+      window.location.href = "/login"
+    }
+  }
 
   return (
     <nav className="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
@@ -56,6 +67,11 @@ export function Navbar() {
               <Badge className="text-xs bg-green-100 text-green-800">
                 Good
               </Badge>
+
+              {/* Dynamic Log In / Log Out Button */}
+              <Button onClick={handleAuthClick} className="ml-4">
+                {isLoggedIn ? "Log Out" : "Log In"}
+              </Button>
             </div>
           </div>
 
@@ -69,52 +85,6 @@ export function Navbar() {
             {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
-
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden pb-4 space-y-2 border-t border-gray-200 pt-4">
-            <Link href="/" className="block px-4 py-3 text-gray-700 hover:text-blue-600 transition-colors rounded-lg" onClick={() => setIsOpen(false)}>
-              <div className="flex items-center gap-3">
-                <Home className="w-5 h-5" />
-                <span className="font-medium">Dashboard</span>
-              </div>
-            </Link>
-            <Link href="/profile" className="block px-4 py-3 text-gray-700 hover:text-blue-600 transition-colors rounded-lg" onClick={() => setIsOpen(false)}>
-              <div className="flex items-center gap-3">
-                <User className="w-5 h-5" />
-                <span className="font-medium">Profile</span>
-              </div>
-            </Link>
-            <Link href="/places" className="block px-4 py-3 text-gray-700 hover:text-blue-600 transition-colors rounded-lg" onClick={() => setIsOpen(false)}>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5" />
-                <span className="font-medium">Places</span>
-              </div>
-            </Link>
-            <Link href="/health" className="block px-4 py-3 text-gray-700 hover:text-blue-600 transition-colors rounded-lg" onClick={() => setIsOpen(false)}>
-              <div className="flex items-center gap-3">
-                <Heart className="w-5 h-5" />
-                <span className="font-medium">Health</span>
-              </div>
-            </Link>
-            <Link href="/run-coach" className="block px-4 py-3 text-gray-700 hover:text-blue-600 transition-colors rounded-lg" onClick={() => setIsOpen(false)}>
-              <div className="flex items-center gap-3">
-                <Wind className="w-5 h-5" />
-                <span className="font-medium">Run Coach</span>
-              </div>
-            </Link>
-            <div className="px-4 pt-3 pb-2">
-              <div className="flex items-center gap-2 mb-3">
-                <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-700">
-                  Houston, TX
-                </Badge>
-                <Badge className="text-xs bg-green-100 text-green-800">
-                  Good
-                </Badge>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   )
