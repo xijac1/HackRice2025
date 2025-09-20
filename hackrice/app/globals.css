@@ -190,6 +190,15 @@ html {
   }
 }
 
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 @keyframes marquee-vertical {
   from {
     transform: translateY(0);
@@ -201,6 +210,10 @@ html {
 
 .animate-marquee {
   animation: marquee var(--duration) linear infinite;
+}
+
+.animate-marquee-reverse {
+  animation: marquee-reverse var(--duration) linear infinite;
 }
 
 .animate-marquee-vertical {
