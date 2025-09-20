@@ -1,20 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
+import Navigation from './components/Navigation';
+import Home from './components/Home';
+import Profile from './components/Profile';
+import Maps from './components/Maps';
+import Login from './components/Login';
 
 function App() {
-  const [message, setMessage] = useState('Loading...');
-
-  useEffect(() => {
-    fetch('http://localhost:5001/api/hello')
-      .then(res => res.json())
-      .then(data => setMessage(data.message))
-      .catch(err => setMessage('Error: ' + err));
-  }, []);
-
   return (
-    <div className="App">
-      <h1>{message}</h1>
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/home" element={
+            <>
+              <Navigation />
+              <main className="main-content">
+                <Home />
+              </main>
+            </>
+          } />
+          <Route path="/profile" element={
+            <>
+              <Navigation />
+              <main className="main-content">
+                <Profile />
+              </main>
+            </>
+          } />
+          <Route path="/maps" element={
+            <>
+              <Navigation />
+              <main className="main-content">
+                <Maps />
+              </main>
+            </>
+          } />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
