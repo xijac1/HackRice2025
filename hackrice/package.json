@@ -11,7 +11,14 @@
   "dependencies": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.3"
+    "next": "15.5.3",
+    "@radix-ui/react-icons": "^1.3.1",
+    "lucide-react": "^0.400.0",
+    "date-fns": "^2.30.0",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.5.0",
+    "class-variance-authority": "^0.7.0",
+    "@radix-ui/react-slot": "^1.1.0"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -22,6 +29,7 @@
     "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
-    "@eslint/eslintrc": "^3"
+    "@eslint/eslintrc": "^3",
+    "@types/date-fns": "^2"
   }
 }
