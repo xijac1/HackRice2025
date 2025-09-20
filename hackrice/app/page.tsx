@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch"; // Assuming you add a Switch component or use native
+import { Switch } from "@/components/ui/switch";
 import { MapPin, Wind, Droplets, User, Heart, Settings, Map, Cloud, AlertTriangle, Radio, Flame } from "lucide-react";
+
 // Helper to get color classes based on risk status
 function getRiskColor(status: string) {
   if (status === "Good") return "bg-green-100";
@@ -29,6 +30,10 @@ export default function Home() {
   const [location, setLocation] = useState({ name: "Houston, TX", lat: 29.7604, lon: -95.3698 });
   const [gpsOptIn, setGpsOptIn] = useState(false);
   const [profile, setProfile] = useState({ hasAsthma: true, sensitivity: "high" }); // Mock from storage
+  const [updatedAt, setUpdatedAt] = useState("—");
+  const [weatherData, setWeatherData] = useState({ temperature: 78, humidity: 65, windSpeed: 8, conditions: "Partly Cloudy" }); // Initial mock
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
 
   // Mock air quality data (integrate real API in prod, e.g., AirNow)
   const airQualityData = {
@@ -44,6 +49,48 @@ export default function Home() {
 
   const adjustedStatus = getRiskStatus(airQualityData.aqi, profile); // Personalized: tighter thresholds
 
+  // Fetch weather from backend (OpenWeatherMap proxy)
+  const fetchWeather = async (lat: number, lon: number) => {
+    setWeatherLoading(true);
+    setWeatherError(null);
+    try {
+      const response = await fetch(`/api/weather/${lat}/${lon}`);
+      if (!response.ok) {
+        let errorMessage: string | undefined;
+        let fallback: typeof weatherData | undefined;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.error;
+          fallback = errorData?.fallback;
+        } catch (_) {
+          // ignore JSON parse errors for non-JSON responses
+        }
+        if (fallback) setWeatherData(fallback);
+        setWeatherError(errorMessage || `Request failed: ${response.status}`);
+        return; // do not throw; we handled it gracefully
+      }
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (_) {
+        setWeatherError('Invalid response from server');
+        return;
+      }
+      if (data?.error) {
+        if (data?.fallback) setWeatherData(data.fallback);
+        setWeatherError(data.error);
+        return;
+      }
+      setWeatherData(data);
+    } catch (error) {
+      console.warn('Weather fetch error:', error);
+      setWeatherError(error instanceof Error ? error.message : 'Unknown error');
+      // Fallback to mock (already set)
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (gpsOptIn && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
@@ -52,12 +99,15 @@ export default function Home() {
     }
   }, [gpsOptIn]);
 
-  const weatherData = {
-    temperature: 78,
-    humidity: 65,
-    windSpeed: 8,
-    conditions: "Partly Cloudy",
-  };
+  // Fetch weather on location change
+  useEffect(() => {
+    fetchWeather(location.lat, location.lon);
+  }, [location]);
+
+  useEffect(() => {
+    const formatter = new Intl.DateTimeFormat([], { hour: "2-digit", minute: "2-digit" });
+    setUpdatedAt(formatter.format(new Date()));
+  }, []);
 
   const savedPlaces = [
     { id: 1, name: "Home", lat: 29.7604, lon: -95.3698, risk: "Good", outlook: "Stable, low pollutants in next 6hrs" },
@@ -81,6 +131,7 @@ export default function Home() {
     }
     return <AlertTriangle className="w-6 h-6 text-red-600" />;
   }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
@@ -111,7 +162,7 @@ export default function Home() {
                       <CardTitle className="text-xl font-semibold text-gray-900">
                         {location.name} - {adjustedStatus}
                       </CardTitle>
-                      <p className="text-sm text-gray-500">Updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="text-sm text-gray-500">Updated {updatedAt}</p>
                       <p className="text-sm font-medium text-gray-700 mt-1">{airQualityData.rationale}</p>
                     </div>
                   </div>
@@ -185,10 +236,13 @@ export default function Home() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
                   <Cloud className="w-5 h-5" />
-                  Weather
+                  Weather {weatherLoading && <span className="text-sm text-gray-500">(Loading...)</span>}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
+                {weatherError && (
+                  <p className="text-sm text-red-600 mb-2">Error: {weatherError}. Using fallback data.</p>
+                )}
                 <div className="space-y-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold text-gray-900">{weatherData.temperature}°F</p>
