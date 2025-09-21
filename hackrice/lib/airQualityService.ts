@@ -1,7 +1,7 @@
 // Air Quality Service for fetching real-time air quality data
 const BACKEND_URL = process.env.NODE_ENV === 'production' 
   ? 'https://your-backend-url.com' 
-  : 'http://localhost:3001';
+  : 'http://localhost:5050';
 
 export interface AirQualityData {
   aqi: number;
@@ -21,13 +21,16 @@ export interface AirQualityError {
 
 export async function fetchAirQuality(lat: number, lon: number): Promise<AirQualityData> {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/air-quality/${lat}/${lon}`);
+    const url = `${BACKEND_URL}/api/air-quality/${lat}/${lon}`;
+    console.log('Making air quality API request to:', url);
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
+    console.log('Air quality API response:', data);
     return data;
   } catch (error) {
     console.error('Failed to fetch air quality data:', error);
