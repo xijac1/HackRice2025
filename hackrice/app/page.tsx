@@ -127,7 +127,13 @@ function getRiskStatus(aqi: number, profile: { hasAsthma: boolean; sensitivity: 
 
 export default function Home() {
   const [location, setLocation] = useState({ name: "Houston, TX", lat: 29.7604, lon: -95.3698 });
-  const [gpsOptIn, setGpsOptIn] = useState(false);
+  const [gpsOptIn, setGpsOptIn] = useState(() => {
+    // Check if GPS was already enabled in this session
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('gpsEnabled') === 'true';
+    }
+    return false;
+  });
   const [profile, setProfile] = useState({ hasAsthma: true, sensitivity: "high" }); // Mock from storage
   const [updatedAt, setUpdatedAt] = useState("—");
   const [weatherData, setWeatherData] = useState({ temperature: 78, humidity: 65, windSpeed: 8, conditions: "Partly Cloudy" }); // Initial mock
@@ -262,6 +268,24 @@ export default function Home() {
     }
   };
 
+  // Handle GPS opt-in and save to session storage
+  const handleGpsOptIn = () => {
+    setGpsOptIn(true);
+    sessionStorage.setItem('gpsEnabled', 'true');
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({ name: "Your Location", lat: pos.coords.latitude, lon: pos.coords.longitude });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          // Keep GPS enabled but show fallback location
+        }
+      );
+    }
+  };
+
   useEffect(() => {
     if (gpsOptIn && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
@@ -314,7 +338,7 @@ export default function Home() {
                 <AlertTriangle className="w-5 h-5 text-yellow-600" />
                 <span className="text-sm text-yellow-800">Enable GPS for personalized location data?</span>
               </div>
-              <Button size="sm" onClick={() => setGpsOptIn(true)}>Allow</Button>
+              <Button size="sm" onClick={handleGpsOptIn}>Allow</Button>
             </CardContent>
           </Card>
         )}
