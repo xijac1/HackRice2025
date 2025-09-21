@@ -12,6 +12,14 @@ export interface AirQualityData {
   outlook: string;
   dateTime?: string;
   regionCode?: string;
+  // Additional pollutant concentrations
+  pm25?: number;
+  pm10?: number;
+  o3?: number;
+  no2?: number;
+  // Health recommendations and additional info
+  healthRecommendations?: any[];
+  additionalInfo?: any;
 }
 
 export interface AirQualityError {
