@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AirSafe - Air Quality & Lung Health",
-  description: "Personalized air quality monitoring and lung health guidance",
+  title: "O'Hare Air - Freshest Air in Thneedville",
+  description: "Personalized air quality monitoring and lung health guidance - Freshest Air in Thneedville",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
