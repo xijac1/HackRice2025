@@ -16,12 +16,16 @@ export function Navbar() {
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <Cloud className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden">
+              <img 
+                src="/ohare-air-logo.svg" 
+                alt="O'Hare Air Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">AirSafe</h1>
-              <p className="text-xs text-gray-600">Lung Health Guide</p>
+              <h1 className="text-xl font-bold text-gray-900">O'Hare Air</h1>
+              <p className="text-xs text-gray-600">Freshest Air in Thneedville</p>
             </div>
           </Link>
 
