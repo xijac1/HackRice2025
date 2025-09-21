@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { MapPin, Wind, Droplets, User, Heart, Settings, Map, Cloud, AlertTriangle, Radio, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Marquee from "@/registry/magicui/marquee";
+import { fetchAirQuality, getAirQualityRiskColor, getAQIDescription, type AirQualityData } from "@/lib/airQualityService";
 
 const reviews = [
   {
@@ -23,7 +24,7 @@ const reviews = [
   },
   {
     name: "Lorax",
-    username: "@TheLoreAxe",
+    username: "@LordOfTheForest",
     body: "A Thneed's a Fine-Something-That-All-People-Need!",
     img: "data:image/jpeg;base64,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",
   },
@@ -35,13 +36,13 @@ const reviews = [
   },
   {
     name: "Lorax",
-    username: "@TheLoreAxe",
+    username: "@TreeLuvr12",
     body: "LET IT GROW!",
     img: "data:image/jpeg;base64,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",
   },
   {
     name: "Lorax",
-    username: "@TheLoreAxe",
+    username: "@LetItGrowLetItGrow",
     body: "Sir! You are crazy with greed. There is no one on earth that would buy that fool Thneed!.",
     img: "data:image/jpeg;base64,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",
   },
@@ -132,20 +133,90 @@ export default function Home() {
   const [weatherData, setWeatherData] = useState({ temperature: 78, humidity: 65, windSpeed: 8, conditions: "Partly Cloudy" }); // Initial mock
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [airQualityData, setAirQualityData] = useState<{[key: string]: AirQualityData}>({});
+  const [airQualityLoading, setAirQualityLoading] = useState(false);
+  const [mainLocationAirQuality, setMainLocationAirQuality] = useState<AirQualityData | null>(null);
+  const [mainLocationAirQualityLoading, setMainLocationAirQualityLoading] = useState(false);
 
-  // Mock air quality data (integrate real API in prod, e.g., AirNow)
-  const airQualityData = {
-    pm25: 12.3,
+  // Fetch air quality data for saved places
+  const fetchAirQualityForPlaces = async () => {
+    setAirQualityLoading(true);
+    const places = [
+      { id: 1, name: "Home", lat: 29.7604, lon: -95.3698 },
+      { id: 2, name: "Work", lat: 29.7499, lon: -95.3664 },
+      { id: 3, name: "Gym", lat: 29.7521, lon: -95.3653 },
+    ];
+
+    try {
+      const promises = places.map(async (place) => {
+        const data = await fetchAirQuality(place.lat, place.lon);
+        return { [place.id]: data };
+      });
+
+      const results = await Promise.all(promises);
+      const combinedData = results.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+      setAirQualityData(combinedData);
+    } catch (error) {
+      console.error('Failed to fetch air quality data:', error);
+    } finally {
+      setAirQualityLoading(false);
+    }
+  };
+
+  // Fetch air quality data for main location
+  const fetchMainLocationAirQuality = async (lat: number, lon: number) => {
+    setMainLocationAirQualityLoading(true);
+    try {
+      const data = await fetchAirQuality(lat, lon);
+      setMainLocationAirQuality(data);
+      setUpdatedAt(new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error('Failed to fetch main location air quality:', error);
+    } finally {
+      setMainLocationAirQualityLoading(false);
+    }
+  };
+
+  // Fetch air quality data on component mount
+  useEffect(() => {
+    fetchAirQualityForPlaces();
+    fetchMainLocationAirQuality(location.lat, location.lon);
+  }, []);
+
+  // Fetch air quality when location changes
+  useEffect(() => {
+    fetchMainLocationAirQuality(location.lat, location.lon);
+  }, [location.lat, location.lon]);
+
+  // Use real air quality data for main location, with fallback to mock data
+  const mainAirQualityData = mainLocationAirQuality ? {
+    pm25: 12.3, // These detailed values would need separate API calls
     pm10: 25.1,
     o3: 45.6,
     no2: 18.2,
     smokeIndex: 5, // 0-10 scale for wildfire/smoke
     radonLevel: "Low", // Mock from EPA API
+    aqi: mainLocationAirQuality.aqi,
+    category: mainLocationAirQuality.category,
+    dominantPollutant: mainLocationAirQuality.dominantPollutant,
+    rationale: profile.hasAsthma ? 
+      `${mainLocationAirQuality.category}. Monitor asthma symptoms due to sensitivity.` : 
+      `${mainLocationAirQuality.category} with ${mainLocationAirQuality.dominantPollutant} as the dominant pollutant.`,
+  } : {
+    // Fallback mock data while loading
+    pm25: 12.3,
+    pm10: 25.1,
+    o3: 45.6,
+    no2: 18.2,
+    smokeIndex: 5,
+    radonLevel: "Low",
     aqi: 35,
+    category: "Good air quality",
+    dominantPollutant: "pm2.5",
     rationale: profile.hasAsthma ? "Good air, but monitor asthma symptoms due to sensitivity." : "Excellent air quality with low pollutant levels.",
   };
 
-  const adjustedStatus = getRiskStatus(airQualityData.aqi, profile); // Personalized: tighter thresholds
+  const adjustedStatus = getRiskStatus(mainAirQualityData.aqi, profile); // Personalized: tighter thresholds
 
   // Fetch weather from backend (Google Weather proxy)
   const fetchWeather = async (lat: number, lon: number) => {
@@ -208,9 +279,9 @@ export default function Home() {
   }, []);
 
   const savedPlaces = [
-    { id: 1, name: "Home", lat: 29.7604, lon: -95.3698, risk: "Good", outlook: "Stable, low pollutants in next 6hrs" },
-    { id: 2, name: "Work", lat: 29.7499, lon: -95.3664, risk: "Caution", outlook: "Improving in 12hrs" },
-    { id: 3, name: "Gym", lat: 29.7521, lon: -95.3653, risk: "Good", outlook: "Clear skies ahead" },
+    { id: 1, name: "Home", lat: 29.7604, lon: -95.3698, risk: airQualityData[1]?.risk || "Good", outlook: airQualityData[1]?.outlook || "Stable, low pollutants in next 6hrs" },
+    { id: 2, name: "Work", lat: 29.7499, lon: -95.3664, risk: airQualityData[2]?.risk || "Caution", outlook: airQualityData[2]?.outlook || "Improving in 12hrs" },
+    { id: 3, name: "Gym", lat: 29.7521, lon: -95.3653, risk: airQualityData[3]?.risk || "Good", outlook: airQualityData[3]?.outlook || "Clear skies ahead" },
   ];
 
   const runCoachSuggestion = {
@@ -261,9 +332,28 @@ export default function Home() {
                         {location.name} - {adjustedStatus}
                       </CardTitle>
                       <p className="text-sm text-gray-500">Updated {updatedAt}</p>
-                      <p className="text-sm font-medium text-gray-700 mt-1">{airQualityData.rationale}</p>
+                      <p className="text-sm font-medium text-gray-700 mt-1">{mainAirQualityData.rationale}</p>
                     </div>
                   </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => fetchMainLocationAirQuality(location.lat, location.lon)}
+                    disabled={mainLocationAirQualityLoading}
+                    className="flex items-center gap-2"
+                  >
+                    {mainLocationAirQualityLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Cloud className="w-4 h-4" />
+                        Refresh Air Quality
+                      </>
+                    )}
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -272,8 +362,18 @@ export default function Home() {
                   <div className="bg-gray-50 p-6 rounded-xl">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-4xl font-bold text-gray-900">{airQualityData.aqi}</h3>
+                        <h3 className="text-4xl font-bold text-gray-900">{mainAirQualityData.aqi}</h3>
                         <p className="text-sm font-medium text-gray-600 mt-1">AQI</p>
+                        {mainLocationAirQuality && (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs text-gray-500">
+                              {mainAirQualityData.category}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Dominant Pollutant: {mainAirQualityData.dominantPollutant}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <Badge className={`text-lg ${adjustedStatus === 'Good' ? 'bg-green-100 text-green-800' : adjustedStatus === 'Caution' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
                         {adjustedStatus}
@@ -284,10 +384,10 @@ export default function Home() {
                   {/* Pollutant Grid: 2-col on mobile, 4-col on lg */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                      { label: "PM2.5", value: `${airQualityData.pm25} μg/m³`, icon: <Droplets className="w-4 h-4" /> },
-                      { label: "O₃", value: `${airQualityData.o3} ppb`, icon: <Wind className="w-4 h-4" /> },
-                      { label: "NO₂", value: `${airQualityData.no2} ppb`, icon: <Cloud className="w-4 h-4" /> },
-                      { label: "Smoke", value: `${airQualityData.smokeIndex}/10`, icon: <Flame className="w-4 h-4 text-orange-500" /> },
+                      { label: "PM2.5", value: `${mainAirQualityData.pm25} μg/m³`, icon: <Droplets className="w-4 h-4" /> },
+                      { label: "O₃", value: `${mainAirQualityData.o3} ppb`, icon: <Wind className="w-4 h-4" /> },
+                      { label: "NO₂", value: `${mainAirQualityData.no2} ppb`, icon: <Cloud className="w-4 h-4" /> },
+                      { label: "Smoke", value: `${mainAirQualityData.smokeIndex}/10`, icon: <Flame className="w-4 h-4 text-orange-500" /> },
                     ].map((pollutant, i) => (
                       <div key={i} className="text-center p-3 bg-gray-50 rounded-lg">
                         <div className="mx-auto mb-1">{pollutant.icon}</div>
@@ -304,7 +404,7 @@ export default function Home() {
                         <Radio className="w-5 h-5 text-gray-500" />
                         <div>
                           <p className="font-medium text-gray-900">Radon Level</p>
-                          <p className="text-sm text-gray-500">{airQualityData.radonLevel}</p>
+                          <p className="text-sm text-gray-500">{mainAirQualityData.radonLevel}</p>
                         </div>
                       </div>
                       <Switch id="radon-optin" defaultChecked aria-label="Opt-in for radon monitoring" />
