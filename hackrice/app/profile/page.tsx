@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch"; // Add if needed
 import { User, Heart, AlertCircle, Home, Factory } from "lucide-react";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [profile, setProfile] = useState({
     name: "Alex Johnson",
     hasAsthma: false,
@@ -27,6 +29,13 @@ export default function ProfilePage() {
     setProfile(newProfile);
     localStorage.setItem("airSafeProfile", JSON.stringify(newProfile));
     // In prod, sync with backend for personalized thresholds
+  };
+
+  const handleSaveAndReturn = () => {
+    // Save the current profile state
+    localStorage.setItem("airSafeProfile", JSON.stringify(profile));
+    // Navigate back to main page
+    router.push("/");
   };
 
   return (
@@ -114,7 +123,18 @@ export default function ProfilePage() {
             These settings adapt recommendations (e.g., Avoid outdoors if high sensitivity during Caution air).
           </p>
 
-          <Button className="w-full bg-primary">Save & Apply</Button>
+          <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1" 
+              onClick={() => router.push("/")}
+            >
+              Cancel
+            </Button>
+            <Button className="flex-1 bg-primary" onClick={handleSaveAndReturn}>
+              Save & Return
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
