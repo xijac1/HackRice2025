@@ -113,8 +113,22 @@ function getRiskColor(status: string) {
 }
 
 // Helper function to determine risk status based on AQI and profile
-function getRiskStatus(aqi: number, profile: { hasAsthma: boolean; sensitivity: string }) {
-  if (profile.hasAsthma || profile.sensitivity === "high") {
+function getRiskStatus(aqi: number, profile: { 
+  hasAsthma: boolean; 
+  hasCardioDisease: boolean;
+  pregnant: boolean;
+  ageGroup: string;
+  lifestyleRisks: { smoking: boolean; mold: boolean };
+  sensitivity: string;
+}) {
+  const hasHealthConditions = profile.hasAsthma || profile.hasCardioDisease || profile.pregnant;
+  const isSensitiveAge = profile.ageGroup !== "adult";
+  const hasLifestyleRisks = profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold;
+  const isHighSensitivity = profile.sensitivity === "high";
+  
+  const needsTighterThresholds = hasHealthConditions || isSensitiveAge || hasLifestyleRisks || isHighSensitivity;
+  
+  if (needsTighterThresholds) {
     if (aqi <= 50) return "Good";
     if (aqi <= 100) return "Caution";
     return "Danger";
@@ -134,7 +148,15 @@ export default function Home() {
     }
     return false;
   });
-  const [profile, setProfile] = useState({ hasAsthma: true, sensitivity: "high" }); // Mock from storage
+  const [profile, setProfile] = useState({ 
+    name: "Alex Johnson",
+    hasAsthma: false, 
+    hasCardioDisease: false,
+    pregnant: false,
+    ageGroup: "adult",
+    lifestyleRisks: { smoking: false, mold: false },
+    sensitivity: "medium" 
+  }); // Load from localStorage
   const [updatedAt, setUpdatedAt] = useState("—");
   const [weatherData, setWeatherData] = useState({ temperature: 78, humidity: 65, windSpeed: 8, conditions: "Partly Cloudy" }); // Initial mock
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -185,6 +207,14 @@ export default function Home() {
     }
   };
 
+  // Load profile from localStorage
+  useEffect(() => {
+    const savedProfile = localStorage.getItem("airSafeProfile");
+    if (savedProfile) {
+      setProfile(JSON.parse(savedProfile));
+    }
+  }, []);
+
   // Fetch air quality data on component mount
   useEffect(() => {
     fetchAirQualityForPlaces();
@@ -207,8 +237,8 @@ export default function Home() {
     aqi: mainLocationAirQuality.aqi,
     category: mainLocationAirQuality.category,
     dominantPollutant: mainLocationAirQuality.dominantPollutant,
-    rationale: profile.hasAsthma ? 
-      `${mainLocationAirQuality.category}. Monitor asthma symptoms due to sensitivity.` : 
+    rationale: (profile.hasAsthma || profile.hasCardioDisease || profile.pregnant || profile.ageGroup !== "adult" || profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold) ? 
+      `${mainLocationAirQuality.category}. Monitor symptoms due to health conditions or sensitivity.` : 
       `${mainLocationAirQuality.category} with ${mainLocationAirQuality.dominantPollutant} as the dominant pollutant.`,
   } : {
     // Fallback mock data while loading
@@ -221,7 +251,9 @@ export default function Home() {
     aqi: 35,
     category: "Good air quality",
     dominantPollutant: "pm2.5",
-    rationale: profile.hasAsthma ? "Good air, but monitor asthma symptoms due to sensitivity." : "Excellent air quality with low pollutant levels.",
+    rationale: (profile.hasAsthma || profile.hasCardioDisease || profile.pregnant || profile.ageGroup !== "adult" || profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold) ? 
+      "Good air, but monitor symptoms due to health conditions or sensitivity." : 
+      "Excellent air quality with low pollutant levels.",
   };
 
   const adjustedStatus = getRiskStatus(mainAirQualityData.aqi, profile); // Personalized: tighter thresholds
@@ -535,13 +567,41 @@ export default function Home() {
               <CardContent className="pt-0">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Alex Johnson</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">{profile.name}</h4>
                     <p className="text-sm text-gray-600">{profile.sensitivity} sensitivity</p>
                   </div>
-                  {profile.hasAsthma && (
-                    <Badge variant="destructive" className="w-full justify-center">
+                  {(profile.hasAsthma || profile.hasCardioDisease || profile.pregnant) && (
+                    <div className="space-y-2">
+                      {profile.hasAsthma && (
+                        <Badge variant="destructive" className="w-full justify-center">
+                          <Heart className="w-3 h-3 mr-1" />
+                          Asthma Alert
+                        </Badge>
+                      )}
+                      {profile.hasCardioDisease && (
+                        <Badge variant="destructive" className="w-full justify-center">
+                          <Heart className="w-3 h-3 mr-1" />
+                          Cardiopulmonary Disease
+                        </Badge>
+                      )}
+                      {profile.pregnant && (
+                        <Badge variant="destructive" className="w-full justify-center">
+                          <Heart className="w-3 h-3 mr-1" />
+                          Pregnancy Alert
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                  {profile.ageGroup !== "adult" && (
+                    <Badge variant="secondary" className="w-full justify-center">
                       <Heart className="w-3 h-3 mr-1" />
-                      Asthma Alert
+                      {profile.ageGroup === "child" ? "Child" : "Older Adult"} Sensitivity
+                    </Badge>
+                  )}
+                  {(profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold) && (
+                    <Badge variant="secondary" className="w-full justify-center">
+                      <Heart className="w-3 h-3 mr-1" />
+                      Lifestyle Risks
                     </Badge>
                   )}
                   <Button variant="outline" size="sm" className="w-full" asChild>
