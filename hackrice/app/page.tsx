@@ -141,13 +141,8 @@ function getRiskStatus(aqi: number, profile: {
 
 export default function Home() {
   const [location, setLocation] = useState({ name: "Houston, TX", lat: 29.7604, lon: -95.3698 });
-  const [gpsOptIn, setGpsOptIn] = useState(() => {
-    // Check if GPS was already enabled in this session
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('gpsEnabled') === 'true';
-    }
-    return false;
-  });
+  const [gpsOptIn, setGpsOptIn] = useState(false); // Initialize to false, check in useEffect
+  const [isClient, setIsClient] = useState(false);
   const [profile, setProfile] = useState({ 
     name: "Alex Johnson",
     hasAsthma: false, 
@@ -207,12 +202,18 @@ export default function Home() {
     }
   };
 
-  // Load profile from localStorage
+  // Set client flag and load data from localStorage/sessionStorage
   useEffect(() => {
+    setIsClient(true);
+    
     const savedProfile = localStorage.getItem("airSafeProfile");
     if (savedProfile) {
       setProfile(JSON.parse(savedProfile));
     }
+    
+    // Check GPS opt-in status after component mounts
+    const gpsEnabled = sessionStorage.getItem('gpsEnabled') === 'true';
+    setGpsOptIn(gpsEnabled);
   }, []);
 
   // Fetch air quality data on component mount
@@ -357,6 +358,18 @@ export default function Home() {
       return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
     }
     return <AlertTriangle className="w-6 h-6 text-red-600" />;
+  }
+
+  // Prevent hydration mismatch by not rendering until client is ready
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-orange-400 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
