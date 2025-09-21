@@ -5,11 +5,13 @@ const nextConfig: NextConfig = {
     // Silence inferred root warnings by pinning to this project folder
     root: __dirname,
   },
-  async rewrites() {
+  async redirects() {
     return [
+      // Optional: catch errors and send them to /auth-error
       {
-        source: "/api/:path*",
-        destination: "http://localhost:5050/api/:path*",
+        source: "/auth/error",
+        destination: "/auth-error",
+        permanent: false,
       },
     ];
   },
