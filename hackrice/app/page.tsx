@@ -66,10 +66,10 @@ const ReviewCard = ({
     <figure
       className={cn(
         "relative h-full w-64 cursor-pointer overflow-hidden rounded-xl border p-4",
-        // light styles
-        "border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05]",
-        // dark styles
-        "dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15]",
+        // light styles - solid white background
+        "border-gray-200 bg-white hover:bg-gray-50 shadow-sm",
+        // dark styles - solid dark background
+        "dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-750",
       )}
     >
       <div className="flex flex-row items-center gap-2">
@@ -328,7 +328,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-orange-400 to-white">
       <div className="container mx-auto px-4 py-6">
         {/* GPS Opt-In Prompt */}
         {!gpsOptIn && (
