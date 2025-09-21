@@ -118,12 +118,13 @@ function getRiskStatus(aqi: number, profile: {
   hasCardioDisease: boolean;
   pregnant: boolean;
   ageGroup: string;
-  lifestyleRisks: { smoking: boolean; mold: boolean };
+  lifestyleSmoking: boolean;
+  lifestyleMold: boolean;
   sensitivity: string;
 }) {
   const hasHealthConditions = profile.hasAsthma || profile.hasCardioDisease || profile.pregnant;
   const isSensitiveAge = profile.ageGroup !== "adult";
-  const hasLifestyleRisks = profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold;
+  const hasLifestyleRisks = profile.lifestyleSmoking || profile.lifestyleMold;
   const isHighSensitivity = profile.sensitivity === "high";
   
   const needsTighterThresholds = hasHealthConditions || isSensitiveAge || hasLifestyleRisks || isHighSensitivity;
@@ -149,14 +150,15 @@ export default function Home() {
     return false;
   });
   const [profile, setProfile] = useState({ 
-    name: "Alex Johnson",
+    name: "Name",
     hasAsthma: false, 
     hasCardioDisease: false,
     pregnant: false,
     ageGroup: "adult",
-    lifestyleRisks: { smoking: false, mold: false },
+    lifestyleSmoking: false,
+    lifestyleMold: false,
     sensitivity: "medium" 
-  }); // Load from localStorage
+  }); // Load from API
   const [updatedAt, setUpdatedAt] = useState("—");
   const [weatherData, setWeatherData] = useState({ temperature: 78, humidity: 65, windSpeed: 8, conditions: "Partly Cloudy" }); // Initial mock
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -207,12 +209,48 @@ export default function Home() {
     }
   };
 
-  // Load profile from localStorage
+  // Load profile from API with localStorage fallback
   useEffect(() => {
-    const savedProfile = localStorage.getItem("airSafeProfile");
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            setProfile(data);
+            // Also store in localStorage for consistency
+            localStorage.setItem("airSafeProfile", JSON.stringify(data));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile:", err);
+        // Fallback to localStorage if API fails
+        const savedProfile = localStorage.getItem("airSafeProfile");
+        if (savedProfile) {
+          setProfile(JSON.parse(savedProfile));
+        }
+      }
     }
+    fetchProfile();
+  }, []);
+
+  // Listen for profile updates from localStorage (when returning from profile page)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedProfile = localStorage.getItem("airSafeProfile");
+      if (savedProfile) {
+        setProfile(JSON.parse(savedProfile));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Also check on focus (when returning from profile page)
+    window.addEventListener('focus', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleStorageChange);
+    };
   }, []);
 
   // Fetch air quality data on component mount
@@ -237,7 +275,7 @@ export default function Home() {
     aqi: mainLocationAirQuality.aqi,
     category: mainLocationAirQuality.category,
     dominantPollutant: mainLocationAirQuality.dominantPollutant,
-    rationale: (profile.hasAsthma || profile.hasCardioDisease || profile.pregnant || profile.ageGroup !== "adult" || profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold) ? 
+    rationale: (profile.hasAsthma || profile.hasCardioDisease || profile.pregnant || profile.ageGroup !== "adult" || profile.lifestyleSmoking || profile.lifestyleMold) ? 
       `${mainLocationAirQuality.category}. Monitor symptoms due to health conditions or sensitivity.` : 
       `${mainLocationAirQuality.category} with ${mainLocationAirQuality.dominantPollutant} as the dominant pollutant.`,
   } : {
@@ -251,7 +289,7 @@ export default function Home() {
     aqi: 35,
     category: "Good air quality",
     dominantPollutant: "pm2.5",
-    rationale: (profile.hasAsthma || profile.hasCardioDisease || profile.pregnant || profile.ageGroup !== "adult" || profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold) ? 
+    rationale: (profile.hasAsthma || profile.hasCardioDisease || profile.pregnant || profile.ageGroup !== "adult" || profile.lifestyleSmoking || profile.lifestyleMold) ? 
       "Good air, but monitor symptoms due to health conditions or sensitivity." : 
       "Excellent air quality with low pollutant levels.",
   };
@@ -598,7 +636,7 @@ export default function Home() {
                       {profile.ageGroup === "child" ? "Child" : "Older Adult"} Sensitivity
                     </Badge>
                   )}
-                  {(profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold) && (
+                  {(profile.lifestyleSmoking || profile.lifestyleMold) && (
                     <Badge variant="secondary" className="w-full justify-center">
                       <Heart className="w-3 h-3 mr-1" />
                       Lifestyle Risks

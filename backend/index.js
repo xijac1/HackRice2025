@@ -22,7 +22,7 @@ let users = {};
 function getUser(userId = 'default') {
   if (!users[userId]) {
     users[userId] = {
-      profile: { name: 'Alex Johnson', hasAsthma: false, sensitivity: 'medium' },
+      profile: { name: 'Name', hasAsthma: false, sensitivity: 'medium' },
       places: [
         { id: 1, name: 'Home', lat: 29.7604, lon: -95.3698, risk: 'Good', outlook: 'Stable' },
         { id: 2, name: 'Work', lat: 29.7499, lon: -95.3664, risk: 'Caution', outlook: 'Improving' }

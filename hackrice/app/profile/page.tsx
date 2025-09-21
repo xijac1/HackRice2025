@@ -60,6 +60,10 @@ export default function ProfilePage() {
         body: JSON.stringify(profile),
       });
       if (!res.ok) throw new Error("Failed to save profile");
+      
+      // Store profile in localStorage for immediate sync with main page
+      localStorage.setItem("airSafeProfile", JSON.stringify(profile));
+      
       router.push("/");
     } catch (err) {
       console.error(err);
