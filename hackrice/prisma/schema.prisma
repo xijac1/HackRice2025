@@ -15,6 +15,23 @@ model User {
   password   String    @db.VarChar(255)
   created_at DateTime? @default(now()) @db.Timestamp(6)
   updated_at DateTime? @default(now()) @db.Timestamp(6)
+
+  profile Profile?
 }
 
+model Profile {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  name             String
+  hasAsthma        Boolean  @default(false)
+  hasCardioDisease Boolean  @default(false)
+  pregnant         Boolean  @default(false)
+  ageGroup         String   @default("adult")
+  lifestyleSmoking Boolean  @default(false)
+  lifestyleMold    Boolean  @default(false)
+  sensitivity      String   @default("medium")
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
 
+  user User @relation(fields: [userId], references: [id])
+}

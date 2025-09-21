@@ -3,40 +3,71 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch"; // Add if needed
+import { Switch } from "@/components/ui/switch";
 import { User, Heart, AlertCircle, Home, Factory } from "lucide-react";
+
+type Profile = {
+  name: string;
+  hasAsthma: boolean;
+  hasCardioDisease: boolean;
+  pregnant: boolean;
+  ageGroup: string;
+  lifestyleSmoking: boolean;
+  lifestyleMold: boolean;
+  sensitivity: string;
+};
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState({
-    name: "Alex Johnson",
+  const [profile, setProfile] = useState<Profile>({
+    name: "",
     hasAsthma: false,
     hasCardioDisease: false,
     pregnant: false,
-    ageGroup: "adult", // child, older-adult
-    lifestyleRisks: { smoking: false, mold: false }, // Domestic risks
+    ageGroup: "adult",
+    lifestyleSmoking: false,
+    lifestyleMold: false,
     sensitivity: "medium",
   });
+  const [loading, setLoading] = useState(true);
 
+  // Fetch profile from backend on mount
   useEffect(() => {
-    // Load from localStorage
-    const saved = localStorage.getItem("airSafeProfile");
-    if (saved) setProfile(JSON.parse(saved));
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/profile");
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const data = await res.json();
+        if (data) setProfile(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProfile();
   }, []);
 
-  const saveProfile = (updates: any) => {
-    const newProfile = { ...profile, ...updates };
-    setProfile(newProfile);
-    localStorage.setItem("airSafeProfile", JSON.stringify(newProfile));
-    // In prod, sync with backend for personalized thresholds
+  const saveProfile = (updates: Partial<Profile>) => {
+    setProfile({ ...profile, ...updates });
   };
 
-  const handleSaveAndReturn = () => {
-    // Save the current profile state
-    localStorage.setItem("airSafeProfile", JSON.stringify(profile));
-    // Navigate back to main page
-    router.push("/");
+  const handleSaveAndReturn = async () => {
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile),
+      });
+      if (!res.ok) throw new Error("Failed to save profile");
+      router.push("/");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save profile. Try again.");
+    }
   };
+
+  if (loading) return <p className="text-center mt-10">Loading...</p>;
 
   return (
     <div className="container mx-auto px-4 py-10 bg-gray-50 min-h-screen">
@@ -112,8 +143,10 @@ export default function ProfilePage() {
                   Exposure to Smoking/Mold
                 </span>
                 <Switch
-                  checked={profile.lifestyleRisks.smoking || profile.lifestyleRisks.mold}
-                  onCheckedChange={(checked) => saveProfile({ lifestyleRisks: { smoking: checked, mold: checked } })}
+                  checked={profile.lifestyleSmoking || profile.lifestyleMold}
+                  onCheckedChange={(checked) =>
+                    saveProfile({ lifestyleSmoking: checked, lifestyleMold: checked })
+                  }
                 />
               </div>
             </div>
@@ -124,11 +157,7 @@ export default function ProfilePage() {
           </p>
 
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              className="flex-1" 
-              onClick={() => router.push("/")}
-            >
+            <Button variant="outline" className="flex-1" onClick={() => router.push("/")}>
               Cancel
             </Button>
             <Button className="flex-1 bg-primary" onClick={handleSaveAndReturn}>
