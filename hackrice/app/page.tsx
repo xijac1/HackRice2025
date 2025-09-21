@@ -8,6 +8,8 @@ import { MapPin, Wind, Droplets, User, Heart, Settings, Map, Cloud, AlertTriangl
 import { cn } from "@/lib/utils";
 import Marquee from "@/registry/magicui/marquee";
 import { fetchAirQuality, getAirQualityRiskColor, getAQIDescription, type AirQualityData } from "@/lib/airQualityService";
+import { generateHealthSuggestions, type HealthSuggestion, type ProfileData } from "@/lib/aiHealthService";
+import { HealthSuggestions } from "@/components/HealthSuggestions";
 
 const reviews = [
   {
@@ -167,6 +169,9 @@ export default function Home() {
   const [airQualityLoading, setAirQualityLoading] = useState(false);
   const [mainLocationAirQuality, setMainLocationAirQuality] = useState<AirQualityData | null>(null);
   const [mainLocationAirQualityLoading, setMainLocationAirQualityLoading] = useState(false);
+  const [healthSuggestions, setHealthSuggestions] = useState<HealthSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
 
   // Fetch air quality data for saved places
   const fetchAirQualityForPlaces = async () => {
@@ -263,6 +268,37 @@ export default function Home() {
   useEffect(() => {
     fetchMainLocationAirQuality(location.lat, location.lon);
   }, [location.lat, location.lon]);
+
+  // Generate AI health suggestions when profile or air quality data changes
+  const generateSuggestions = async () => {
+    if (!mainLocationAirQuality || !profile.name) return;
+    
+    setSuggestionsLoading(true);
+    setSuggestionsError(null);
+    
+    try {
+      const context = {
+        profile: profile as ProfileData,
+        airQuality: mainLocationAirQuality,
+        location: location.name
+      };
+      
+      const suggestions = await generateHealthSuggestions(context);
+      setHealthSuggestions(suggestions);
+    } catch (error) {
+      console.error('Failed to generate health suggestions:', error);
+      setSuggestionsError('Failed to generate AI suggestions');
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  // Generate suggestions when air quality data or profile changes
+  useEffect(() => {
+    if (mainLocationAirQuality && profile.name) {
+      generateSuggestions();
+    }
+  }, [mainLocationAirQuality, profile]);
 
   // Use real air quality data for main location, with fallback to mock data
   const mainAirQualityData = mainLocationAirQuality ? {
@@ -524,6 +560,15 @@ export default function Home() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* AI Health Suggestions - Full Width */}
+            <div className="mt-6">
+              <HealthSuggestions 
+                suggestions={healthSuggestions}
+                loading={suggestionsLoading}
+                error={suggestionsError}
+              />
+            </div>
 
             {/* Saved Places Card - To the left of Run Coach */}
             <Card className="shadow-sm border-0 bg-white mt-6">
