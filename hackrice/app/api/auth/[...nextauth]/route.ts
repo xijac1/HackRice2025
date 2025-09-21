@@ -1,6 +1,7 @@
 import NextAuth, { AuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma" 
+import { NextResponse } from "next/server"
 
 import bcrypt from "bcrypt"
 
@@ -33,8 +34,8 @@ export const authOptions: AuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/login", // redirect to your login page
-    error: "/login?error=true",
+    signIn: "/login", // redirect to your login page,
+    error: "/auth-error",
   },
 }
 
