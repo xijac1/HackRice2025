@@ -42,7 +42,7 @@ export default function GoogleMapsPlaces({ onPlaceSelect, existingPlaces }: Goog
 
         // Create API loader element
         const apiLoader = document.createElement('gmpx-api-loader');
-        apiLoader.setAttribute('key', 'REMOVED');
+        apiLoader.setAttribute('key', process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '');
         apiLoader.setAttribute('solution-channel', 'GMP_GE_mapsandplacesautocomplete_v2');
         document.body.appendChild(apiLoader);
 
