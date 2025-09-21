@@ -263,7 +263,7 @@ export default function Home() {
     setWeatherLoading(true);
     setWeatherError(null);
     try {
-      const response = await fetch(`/api/weather/${lat}/${lon}`);
+      const response = await fetch(`http://localhost:5050/api/weather/${lat}/${lon}`);
       if (!response.ok) {
         let errorMessage: string | undefined;
         let fallback: typeof weatherData | undefined;
