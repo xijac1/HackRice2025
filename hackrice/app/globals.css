@@ -182,19 +182,19 @@ html {
 
 /* Marquee animations */
 @keyframes marquee {
-  from {
+  0% {
     transform: translateX(0);
   }
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
+  100% {
+    transform: translateX(-50%);
   }
 }
 
 @keyframes marquee-reverse {
-  from {
-    transform: translateX(calc(-100% - var(--gap)));
+  0% {
+    transform: translateX(-50%);
   }
-  to {
+  100% {
     transform: translateX(0);
   }
 }
