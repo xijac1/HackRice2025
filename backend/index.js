@@ -76,7 +76,7 @@ app.get('/api/weather/:lat/:lon', async (req, res) => {
   }
 });
 
-// API: Fetch air quality from Google Air Quality API
+// API: Fetch air quality from Google Air Quality API with additional pollutant information
 app.get('/api/air-quality/:lat/:lon', async (req, res) => {
   const { lat, lon } = req.params;
   const apiKey = 'AIzaSyBpbnqAsQQ8TEENFW-RTukadsvb3w5hZI8'; // Google Air Quality API key
@@ -84,10 +84,18 @@ app.get('/api/air-quality/:lat/:lon', async (req, res) => {
   try {
     const url = 'https://airquality.googleapis.com/v1/currentConditions:lookup';
     const requestBody = {
-      location: {
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon)
-      }
+      "location": {
+        "latitude": parseFloat(lat),
+        "longitude": parseFloat(lon)
+      },
+      "extraComputations": [
+        "HEALTH_RECOMMENDATIONS",
+        "DOMINANT_POLLUTANT_CONCENTRATION",
+        "POLLUTANT_CONCENTRATION",
+        "LOCAL_AQI",
+        "POLLUTANT_ADDITIONAL_INFO"
+      ],
+      "languageCode": "en"
     };
 
     const { data } = await axios.post(`${url}?key=${apiKey}`, requestBody, {
@@ -97,11 +105,55 @@ app.get('/api/air-quality/:lat/:lon', async (req, res) => {
     });
 
     // Extract air quality data from response
+    console.log('Full API response:', JSON.stringify(data, null, 2));
+    
     const airQualityData = data?.indexes?.[0] || {};
-    const aqi = airQualityData.aqi || 0;
-    const category = airQualityData.category || 'Unknown';
-    const dominantPollutant = airQualityData.dominantPollutant || 'Unknown';
-    const displayName = airQualityData.displayName || 'AQI';
+    console.log('Air quality data from indexes[0]:', JSON.stringify(airQualityData, null, 2));
+    
+    // Try to get US EPA AQI first, fallback to universal AQI
+    let aqi = 0;
+    let category = 'Unknown';
+    let dominantPollutant = 'Unknown';
+    let displayName = 'AQI';
+    
+    // Look for US EPA AQI in the indexes array
+    const usaEpaIndex = data?.indexes?.find(index => index.code === 'usa_epa');
+    if (usaEpaIndex) {
+      aqi = usaEpaIndex.aqi || 0;
+      category = usaEpaIndex.category || 'Unknown';
+      dominantPollutant = usaEpaIndex.dominantPollutant || 'Unknown';
+      displayName = usaEpaIndex.displayName || 'AQI (US)';
+      console.log('Using US EPA AQI:', aqi);
+    } else {
+      // Fallback to universal AQI
+      aqi = airQualityData.aqi || 0;
+      category = airQualityData.category || 'Unknown';
+      dominantPollutant = airQualityData.dominantPollutant || 'Unknown';
+      displayName = airQualityData.displayName || 'Universal AQI';
+      console.log('Using universal AQI:', aqi);
+    }
+    
+    // Extract additional pollutant concentrations
+    const pollutants = data?.pollutants || [];
+    const pollutantData = {};
+    
+    console.log('Raw API response pollutants:', JSON.stringify(pollutants, null, 2));
+    
+    // Extract specific pollutant concentrations
+    pollutants.forEach(pollutant => {
+      console.log(`Processing pollutant: ${pollutant.code}, concentration: ${pollutant.concentration?.value}`);
+      if (pollutant.code === 'pm25') {
+        pollutantData.pm25 = pollutant.concentration?.value || 0;
+      } else if (pollutant.code === 'o3') {
+        pollutantData.o3 = pollutant.concentration?.value || 0;
+      } else if (pollutant.code === 'no2') {
+        pollutantData.no2 = pollutant.concentration?.value || 0;
+      } else if (pollutant.code === 'pm10') {
+        pollutantData.pm10 = pollutant.concentration?.value || 0;
+      }
+    });
+    
+    console.log('Processed pollutant data:', JSON.stringify(pollutantData, null, 2));
     
     // Map AQI to risk levels for frontend compatibility
     let risk = 'Good';
@@ -129,9 +181,19 @@ app.get('/api/air-quality/:lat/:lon', async (req, res) => {
       risk,
       outlook,
       dateTime: data?.dateTime,
-      regionCode: data?.regionCode
+      regionCode: data?.regionCode,
+      // Additional pollutant data
+      pm25: pollutantData.pm25 !== undefined ? pollutantData.pm25 : 0,
+      pm10: pollutantData.pm10 !== undefined ? pollutantData.pm10 : 0,
+      o3: pollutantData.o3 !== undefined ? pollutantData.o3 : 0,
+      no2: pollutantData.no2 !== undefined ? pollutantData.no2 : 0,
+      // Health recommendations if available
+      healthRecommendations: data?.healthRecommendations || [],
+      // Additional info
+      additionalInfo: data?.pollutantAdditionalInfo || {}
     };
 
+    console.log('Final air quality response:', JSON.stringify(airQuality, null, 2));
     res.json(airQuality);
   } catch (error) {
     console.error('Air Quality API error:', error?.response?.data || error.message);
@@ -144,7 +206,13 @@ app.get('/api/air-quality/:lat/:lon', async (req, res) => {
       risk: 'Good',
       outlook: 'Good air quality conditions',
       dateTime: new Date().toISOString(),
-      regionCode: 'us'
+      regionCode: 'us',
+      pm25: 12.3,
+      pm10: 25.1,
+      o3: 45.6,
+      no2: 18.2,
+      healthRecommendations: [],
+      additionalInfo: {}
     };
     res.json(fallbackData);
   }

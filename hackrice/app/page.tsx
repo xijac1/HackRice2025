@@ -198,12 +198,12 @@ export default function Home() {
 
   // Use real air quality data for main location, with fallback to mock data
   const mainAirQualityData = mainLocationAirQuality ? {
-    pm25: 12.3, // These detailed values would need separate API calls
-    pm10: 25.1,
-    o3: 45.6,
-    no2: 18.2,
-    smokeIndex: 5, // 0-10 scale for wildfire/smoke
-    radonLevel: "Low", // Mock from EPA API
+    pm25: mainLocationAirQuality.pm25 !== undefined ? mainLocationAirQuality.pm25 : 12.3, // Use real data from API
+    pm10: mainLocationAirQuality.pm10 !== undefined ? mainLocationAirQuality.pm10 : 25.1,
+    o3: mainLocationAirQuality.o3 !== undefined ? mainLocationAirQuality.o3 : 45.6,
+    no2: mainLocationAirQuality.no2 !== undefined ? mainLocationAirQuality.no2 : 18.2,
+    smokeIndex: 5, // 0-10 scale for wildfire/smoke (would need separate API)
+    radonLevel: "Low", // Mock from EPA API (would need separate API)
     aqi: mainLocationAirQuality.aqi,
     category: mainLocationAirQuality.category,
     dominantPollutant: mainLocationAirQuality.dominantPollutant,
@@ -358,6 +358,9 @@ export default function Home() {
                         {location.name} - {adjustedStatus}
                       </CardTitle>
                       <p className="text-sm text-gray-500">Updated {updatedAt}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Coordinates: {location.lat.toFixed(4)}, {location.lon.toFixed(4)}
+                      </p>
                       <p className="text-sm font-medium text-gray-700 mt-1">{mainAirQualityData.rationale}</p>
                     </div>
                   </div>
