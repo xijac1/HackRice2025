@@ -167,7 +167,9 @@ export default function Home() {
   const fetchMainLocationAirQuality = async (lat: number, lon: number) => {
     setMainLocationAirQualityLoading(true);
     try {
+      console.log('Fetching air quality for:', lat, lon);
       const data = await fetchAirQuality(lat, lon);
+      console.log('Air quality data received:', data);
       setMainLocationAirQuality(data);
       setUpdatedAt(new Date().toLocaleTimeString());
     } catch (error) {
