@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wind, Map, Clock, AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import GoogleMap from "@/components/google-map";
 
 export default function RunCoachPage() {
   const [suggestions] = useState({
@@ -12,6 +13,10 @@ export default function RunCoachPage() {
     aqiForecast: [35, 32, 28], // Next 3 hours
     warnings: "Low smoke detected; stay hydrated.",
   });
+
+  const center = { lat: 29.7604, lng: -95.3698 };
+  const origin = center;
+  const destination = { lat: center.lat, lng: center.lng + 0.05 }; // Approximate east direction
 
   return (
     <div className="container mx-auto px-4 py-10 bg-gray-50 min-h-screen">
@@ -29,10 +34,13 @@ export default function RunCoachPage() {
               <p className="text-lg font-medium">{suggestions.direction}</p>
               <p className="text-sm text-gray-600 mt-1">Follow winds to avoid pollutants</p>
               {/* Mock map preview */}
-              <div className="w-full h-32 bg-gray-200 rounded mt-2 flex items-center justify-center">
-                <Map className="w-8 h-8 text-gray-500" />
-                <span className="ml-2 text-gray-500">Map Preview</span>
-              </div>
+              <GoogleMap
+                center={center}
+                zoom={12}
+                style={{ width: '100%', height: '200px' }}
+                origin={origin}
+                destination={destination}
+              />
             </div>
           </div>
 
